@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Feedback;
+use App\Models\UserFeedback;
+use App\Models\Comment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\Feedback\FeedbackCollection;
@@ -29,6 +31,7 @@ class FeedbackController extends Controller
         }
 
         $feedback = $query->paginate(10);
+        dd($feedback->upvotes());
         $data = array(
             'feedback' => FeedbackResource::collection($feedback)
         );
@@ -76,38 +79,56 @@ class FeedbackController extends Controller
 
     public function upvote($id)
     {
+        $user = Auth::user();
         $feedback = Feedback::findOrFail($id);
 
-        // Check if the user has already upvoted
-        if ($feedback->hasUpvotedByUser(auth()->user()->id)) {
-            return response()->json(['message' => 'You have already upvoted this feedback.'], 400);
+
+        $user_voted = UserFeedback::where('user_id',$user->id)->first();
+        if($user_voted)
+        {
+            return response()->json(['message' => 'You have already vote this feedback.']);
         }
-
-        // Upvote the feedback
-        $feedback->upvotes()->attach(auth()->user()->id);
-
-        // Update the vote count
-        $feedback->increment('vote_count');
+        $user_vote = new UserFeedback();
+        $user_vote->user_id = $user->id;
+        $user_vote->feedback_id  = $feedback->id;
+        $user_vote->vote_type  =  'upvote';
+        $user_vote->save();
 
         return response()->json(['message' => 'Upvoted successfully.']);
     }
 
     public function downvote($id)
     {
+        $user = Auth::user();
         $feedback = Feedback::findOrFail($id);
 
-        // Check if the user has already downvoted
-        if ($feedback->hasDownvotedByUser(auth()->user()->id)) {
-            return response()->json(['message' => 'You have already downvoted this feedback.'], 400);
+
+        $user_voted = UserFeedback::where('user_id',$user->id)->first();
+        if($user_voted)
+        {
+            return response()->json(['message' => 'You have already vote this feedback.']);
         }
+        $user_vote = new UserFeedback();
+        $user_vote->user_id = $user->id;
+        $user_vote->feedback_id  = $feedback->id;
+        $user_vote->vote_type  =  'downvote';
+        $user_vote->save();
 
-        // Downvote the feedback
-        $feedback->downvotes()->attach(auth()->user()->id);
+        return response()->json(['message' => 'downvote successfully.']);
+    }
 
-        // Update the vote count
-        $feedback->decrement('vote_count');
+    public function comment(Request $request,$id)
+    {
+        $user = Auth::user();
+        $feedback = Feedback::findOrFail($id);
 
-        return response()->json(['message' => 'Downvoted successfully.']);
+        $user_comment = new Comment();
+        $user_comment->user_id = $user->id;
+        $user_comment->feedback_id  = $feedback->id;
+        $user_comment->content = $request->content;
+        $user_comment->save();
+
+        return response()->json(['message' => 'Comment successfully.']);
     }
 
 }

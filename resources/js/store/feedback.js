@@ -54,11 +54,11 @@ export const useFeedbackStore = defineStore("feedback", () => {
     };
 
     const addUpVote = async ( id ) => {
-        const response = await ApiService.delete(`/api/feedback/${id}/upvote` ,headers);
+        const response = await ApiService.post(`/api/feedback/${id}/upvote` ,headers);
         return response;
     };
     const downVote = async ( id ) => {
-        const response = await ApiService.delete(`/api/feedback/${id}/downvote` ,headers);
+        const response = await ApiService.post(`/api/feedback/${id}/downvote` ,headers);
         return response;
     };
 
@@ -70,6 +70,8 @@ export const useFeedbackStore = defineStore("feedback", () => {
         addFeedBack,
         editFeedBack,
         getFeedBackDatabyId,
-        feedBackDelete
+        feedBackDelete,
+        addUpVote,
+        downVote
     }
 });
